@@ -6,14 +6,19 @@ struct Board<'a> {
 }
 
 impl<'a> fmt::Display for Board<'a> {
+    // https://chess.stackexchange.com/questions/1600/chess-program-for-linux-unix-console
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let my_pieces_space = to_space(&self.my_pieces);
+        let enemy_pieces_space = to_space(&self.enemy_pieces);
+
         let board_strs: Vec<String> = my_pieces_space
             .iter()
+            .zip(enemy_pieces_space.iter())
             .rev()
-            .map(|place| match place {
-                Some(piece) => "♙".to_string(),
-                None => ".".to_string(),
+            .map(|(my_place, enemy_place)| match (my_place, enemy_place) {
+                (Some(piece), None) => "♙".to_string(),
+                (None, Some(piece)) => "♟".to_string(),
+                _ => ".".to_string(),
             })
             .collect();
 
@@ -104,9 +109,9 @@ impl Piece {
 }
 
 fn main() {
-    let p1 = Piece::new(Position { x: 0, y: 0 });
-    let p2 = Piece::new(Position { x: 1, y: 0 });
-    let p3 = Piece::new(Position { x: 3, y: 4 });
+    let p1 = Piece::new(Position { x: 0, y: 1 });
+    let p2 = Piece::new(Position { x: 1, y: 1 });
+    let p3 = Piece::new(Position { x: 0, y: 6 });
     let board = Board {
         my_pieces: vec![&p1, &p2],
         enemy_pieces: vec![&p3],
