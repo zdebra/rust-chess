@@ -7,8 +7,8 @@ enum Error {
 }
 
 struct Board<'a> {
-    my_pieces: Vec<&'a Piece>,
-    enemy_pieces: Vec<&'a Piece>,
+    my_pieces: &'a Vec<&'a Piece>,
+    enemy_pieces: &'a Vec<&'a Piece>,
 }
 
 impl<'a> fmt::Display for Board<'a> {
@@ -85,6 +85,13 @@ impl<'a> Board<'a> {
             });
         }
         actions
+    }
+
+    fn swap_sides(&self) -> Board {
+        Board {
+            my_pieces: self.enemy_pieces,
+            enemy_pieces: self.my_pieces,
+        }
     }
 }
 
@@ -224,8 +231,8 @@ fn main() {
     let p2 = Piece::new(Position { x: 1, y: 1 }, true);
     let p3 = Piece::new(Position { x: 0, y: 6 }, true);
     let board = Board {
-        my_pieces: vec![&p1, &p2],
-        enemy_pieces: vec![&p3],
+        my_pieces: &vec![&p1, &p2],
+        enemy_pieces: &vec![&p3],
     };
 
     let possible_moves = p1.possible_moves(&board);
@@ -251,8 +258,8 @@ fn pawn_possible_moves() {
     let enemy1 = Piece::new(Position::new(1, 2), false);
     let enemy2 = Piece::new(Position::new(2, 3), false);
     let board = Board {
-        my_pieces: vec![&me1, &me2, &me3, &me4, &me5],
-        enemy_pieces: vec![&enemy1, &enemy2],
+        my_pieces: &vec![&me1, &me2, &me3, &me4, &me5],
+        enemy_pieces: &vec![&enemy1, &enemy2],
     };
 
     assert_eq!(
@@ -297,8 +304,8 @@ fn pawn_possible_strikes() {
     let enemy4 = Piece::new(Position::new(4, 5), false);
     let enemy5 = Piece::new(Position::new(1, 2), false);
     let board = Board {
-        my_pieces: vec![&me1, &me2, &me3, &me4, &me5],
-        enemy_pieces: vec![&enemy1, &enemy2, &enemy3, &enemy4, &enemy5],
+        my_pieces: &vec![&me1, &me2, &me3, &me4, &me5],
+        enemy_pieces: &vec![&enemy1, &enemy2, &enemy3, &enemy4, &enemy5],
     };
 
     assert_eq!(
@@ -340,8 +347,8 @@ fn board_possible_actions() {
     let p2 = Piece::new(Position { x: 3, y: 2 }, false);
     let p3 = Piece::new(Position { x: 1, y: 2 }, false);
     let board = Board {
-        my_pieces: vec![&p1, &p2],
-        enemy_pieces: vec![&p3],
+        my_pieces: &vec![&p1, &p2],
+        enemy_pieces: &vec![&p3],
     };
 
     let expected = vec![
@@ -359,4 +366,17 @@ fn board_possible_actions() {
         },
     ];
     assert_eq!(expected, board.possible_actions());
+}
+
+#[test]
+fn swap_sides() {
+    let p1 = Piece::new(Position { x: 0, y: 1 }, true);
+    let p2 = Piece::new(Position { x: 1, y: 1 }, true);
+    let p3 = Piece::new(Position { x: 0, y: 6 }, true);
+    let board = Board {
+        my_pieces: &vec![&p1, &p2],
+        enemy_pieces: &vec![&p3],
+    };
+    let board = board.swap_sides();
+    assert_eq!(&vec![&p3], board.my_pieces);
 }
