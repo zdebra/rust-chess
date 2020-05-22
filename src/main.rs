@@ -75,6 +75,23 @@ impl<'a> Board<'a> {
             None
         }
     }
+
+    fn possible_actions(&self) -> Vec<PieceAction> {
+        let mut actions = Vec::new();
+        for piece in self.my_pieces.iter() {
+            actions.push(PieceAction {
+                piece: piece,
+                moves: piece.possible_actions(&self),
+            });
+        }
+        actions
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct PieceAction<'a> {
+    piece: &'a Piece,
+    moves: Vec<Position>,
 }
 
 fn to_space<'a>(pieces: &'a Vec<&Piece>) -> [Option<&'a Piece>; 64] {
@@ -119,6 +136,9 @@ impl Position {
                 pos.y += amount;
             }
             Direction::UpLeft => {
+                if amount > pos.x || (amount + pos.y) > 7 {
+                    return Err(Error::PositionOutOfBounds);
+                }
                 pos.x -= amount;
                 pos.y += amount;
             }
@@ -141,7 +161,7 @@ impl Position {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 struct Piece {
     position: Position,
     starting_position: bool,
@@ -190,6 +210,12 @@ impl Piece {
             }
         }
         strikes
+    }
+
+    fn possible_actions<'a>(&self, board: &Board) -> Vec<Position> {
+        let mut actions = self.possible_moves(&board);
+        actions.extend(self.possible_strikes(&board));
+        actions
     }
 }
 
@@ -263,13 +289,16 @@ fn pawn_possible_strikes() {
     let me2 = Piece::new(Position::new(7, 1), true);
     let me3 = Piece::new(Position::new(1, 4), true);
     let me4 = Piece::new(Position::new(3, 4), true);
+    let me5 = Piece::new(Position::new(0, 1), true);
+
     let enemy1 = Piece::new(Position::new(2, 2), false);
     let enemy2 = Piece::new(Position::new(4, 2), false);
     let enemy3 = Piece::new(Position::new(6, 2), false);
     let enemy4 = Piece::new(Position::new(4, 5), false);
+    let enemy5 = Piece::new(Position::new(1, 2), false);
     let board = Board {
-        my_pieces: vec![&me1, &me2, &me3, &me4],
-        enemy_pieces: vec![&enemy1, &enemy2, &enemy3, &enemy4],
+        my_pieces: vec![&me1, &me2, &me3, &me4, &me5],
+        enemy_pieces: vec![&enemy1, &enemy2, &enemy3, &enemy4, &enemy5],
     };
 
     assert_eq!(
@@ -281,8 +310,14 @@ fn pawn_possible_strikes() {
     assert_eq!(
         vec![enemy3.position],
         me2.possible_strikes(&board),
-        "pawn {} strikes on the edge",
+        "pawn {} strikes on the right edge",
         me2.position
+    );
+    assert_eq!(
+        vec![enemy5.position],
+        me5.possible_strikes(&board),
+        "pawn {} strikes on the left edge",
+        me5.position
     );
     let empty_pos: Vec<Position> = Vec::new();
     assert_eq!(
@@ -297,4 +332,31 @@ fn pawn_possible_strikes() {
         "pawn {} one target",
         me4.position
     );
+}
+
+#[test]
+fn board_possible_actions() {
+    let p1 = Piece::new(Position { x: 0, y: 1 }, true);
+    let p2 = Piece::new(Position { x: 3, y: 2 }, false);
+    let p3 = Piece::new(Position { x: 1, y: 2 }, false);
+    let board = Board {
+        my_pieces: vec![&p1, &p2],
+        enemy_pieces: vec![&p3],
+    };
+
+    let expected = vec![
+        PieceAction {
+            piece: &p1,
+            moves: vec![
+                Position::new(0, 2),
+                Position::new(0, 3),
+                Position::new(1, 2),
+            ],
+        },
+        PieceAction {
+            piece: &p2,
+            moves: vec![Position::new(3, 3)],
+        },
+    ];
+    assert_eq!(expected, board.possible_actions());
 }
