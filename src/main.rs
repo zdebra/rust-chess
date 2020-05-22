@@ -92,6 +92,12 @@ struct Position {
     y: usize,
 }
 
+impl fmt::Display for Position {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{x:{}, y:{}}}", self.x, self.y)
+    }
+}
+
 enum Direction {
     Up,
     UpRight,
@@ -114,7 +120,7 @@ impl Position {
             }
             Direction::UpLeft => {
                 pos.x -= amount;
-                pos.y -= amount;
+                pos.y += amount;
             }
         };
         if !pos.is_valid() {
@@ -173,11 +179,18 @@ impl Piece {
         moves
     }
 
-    // fn possible_strikes<'a>(&self, board: &Board) -> Vec<Position> {
-    //     let mut strikes = Vec::new();
-
-    //     strikes
-    // }
+    fn possible_strikes<'a>(&self, board: &Board) -> Vec<Position> {
+        let mut strikes = Vec::new();
+        let strike_directions = vec![Direction::UpLeft, Direction::UpRight];
+        for direction in strike_directions {
+            if let Ok(strike_position) = self.position.move_copy(direction, 1) {
+                if let Some(_) = board.enemy_collision(&strike_position) {
+                    strikes.push(strike_position);
+                }
+            }
+        }
+        strikes
+    }
 }
 
 fn main() {
@@ -203,7 +216,7 @@ fn position_to_arr() {
 }
 
 #[test]
-fn piece_possible_moves() {
+fn pawn_possible_moves() {
     let me1 = Piece::new(Position::new(0, 1), true);
     let me2 = Piece::new(Position::new(1, 1), true);
     let me3 = Piece::new(Position::new(2, 1), true);
@@ -241,5 +254,47 @@ fn piece_possible_moves() {
         vec![Position::new(2, 2)],
         me3.possible_moves(&board),
         "pawn moves from starting position with collision"
+    );
+}
+
+#[test]
+fn pawn_possible_strikes() {
+    let me1 = Piece::new(Position::new(3, 1), true);
+    let me2 = Piece::new(Position::new(7, 1), true);
+    let me3 = Piece::new(Position::new(1, 4), true);
+    let me4 = Piece::new(Position::new(3, 4), true);
+    let enemy1 = Piece::new(Position::new(2, 2), false);
+    let enemy2 = Piece::new(Position::new(4, 2), false);
+    let enemy3 = Piece::new(Position::new(6, 2), false);
+    let enemy4 = Piece::new(Position::new(4, 5), false);
+    let board = Board {
+        my_pieces: vec![&me1, &me2, &me3, &me4],
+        enemy_pieces: vec![&enemy1, &enemy2, &enemy3, &enemy4],
+    };
+
+    assert_eq!(
+        vec![enemy1.position, enemy2.position],
+        me1.possible_strikes(&board),
+        "pawn {} strikes",
+        me1.position
+    );
+    assert_eq!(
+        vec![enemy3.position],
+        me2.possible_strikes(&board),
+        "pawn {} strikes on the edge",
+        me2.position
+    );
+    let empty_pos: Vec<Position> = Vec::new();
+    assert_eq!(
+        empty_pos,
+        me3.possible_strikes(&board),
+        "pawn {} no targets",
+        me3.position
+    );
+    assert_eq!(
+        vec![enemy4.position],
+        me4.possible_strikes(&board),
+        "pawn {} one target",
+        me4.position
     );
 }
