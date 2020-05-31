@@ -1,4 +1,4 @@
-use super::{position::Direction, position::Position, Board};
+use super::{board::Board, position::Direction, position::Position};
 
 pub fn swap_positions(pieces: &mut Vec<Piece>) {
     for piece in pieces.iter_mut() {
