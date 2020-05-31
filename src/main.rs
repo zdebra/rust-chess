@@ -1,17 +1,20 @@
+use rand::seq::SliceRandom;
 use std::fmt;
 
 #[derive(thiserror::Error, Debug)]
 enum Error {
     #[error("position out of bounds")]
     PositionOutOfBounds,
+    #[error("action is invalid")]
+    InvalidAction,
 }
 
-struct Board<'a> {
-    my_pieces: &'a Vec<&'a Piece>,
-    enemy_pieces: &'a Vec<&'a Piece>,
+struct Board {
+    my_pieces: Vec<Piece>,
+    enemy_pieces: Vec<Piece>,
 }
 
-impl<'a> fmt::Display for Board<'a> {
+impl fmt::Display for Board {
     // https://chess.stackexchange.com/questions/1600/chess-program-for-linux-unix-console
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let my_pieces_space = to_space(&self.my_pieces);
@@ -49,7 +52,7 @@ impl<'a> fmt::Display for Board<'a> {
     }
 }
 
-impl<'a> Board<'a> {
+impl Board {
     fn my_collision(&self, position: &Position) -> Option<&Piece> {
         for piece in self.my_pieces.iter() {
             if &piece.position == position {
@@ -79,29 +82,59 @@ impl<'a> Board<'a> {
     fn possible_actions(&self) -> Vec<PieceAction> {
         let mut actions = Vec::new();
         for piece in self.my_pieces.iter() {
-            actions.push(PieceAction {
-                piece: piece,
-                moves: piece.possible_actions(&self),
-            });
+            for action in piece.possible_actions(&self) {
+                actions.push(PieceAction {
+                    piece: piece,
+                    destination: action,
+                });
+            }
         }
         actions
     }
 
-    fn swap_sides(&self) -> Board {
-        Board {
-            my_pieces: self.enemy_pieces,
-            enemy_pieces: self.my_pieces,
+    fn swap_sides(&mut self) {
+        std::mem::swap(&mut self.my_pieces, &mut self.enemy_pieces);
+    }
+
+    fn play(&self, action: &PieceAction) -> Result<Board, Error> {
+        if !self.possible_actions().iter().any(|a| a == action) {
+            return Err(Error::InvalidAction);
         }
+
+        // TODO: get rid of clone
+        let mut output_board = Board {
+            my_pieces: self.my_pieces.clone(),
+            enemy_pieces: self.enemy_pieces.clone(),
+        };
+
+        if let Some(enemy_piece) = self.enemy_collision(&action.destination) {
+            let enemy_piece_index = self
+                .enemy_pieces
+                .iter()
+                .position(|piece| piece == enemy_piece)
+                .unwrap();
+            output_board.enemy_pieces.remove(enemy_piece_index);
+        }
+
+        output_board
+            .my_pieces
+            .iter_mut()
+            .find(|piece| piece == &action.piece)
+            .unwrap()
+            .set_position(action.destination);
+
+        output_board.swap_sides();
+        Ok(output_board)
     }
 }
 
 #[derive(Debug, Eq, PartialEq)]
 struct PieceAction<'a> {
     piece: &'a Piece,
-    moves: Vec<Position>,
+    destination: Position,
 }
 
-fn to_space<'a>(pieces: &'a Vec<&Piece>) -> [Option<&'a Piece>; 64] {
+fn to_space<'a>(pieces: &'a Vec<Piece>) -> [Option<&'a Piece>; 64] {
     let mut board: [Option<&Piece>; 64] = [None; 64];
     for piece in pieces {
         let arr_pos = piece.position.arr_pos();
@@ -224,19 +257,29 @@ impl Piece {
         actions.extend(self.possible_strikes(&board));
         actions
     }
+
+    fn set_position(&mut self, position: Position) {
+        self.position = position;
+    }
 }
 
 fn main() {
     let p1 = Piece::new(Position { x: 0, y: 1 }, true);
     let p2 = Piece::new(Position { x: 1, y: 1 }, true);
     let p3 = Piece::new(Position { x: 0, y: 6 }, true);
-    let board = Board {
-        my_pieces: &vec![&p1, &p2],
-        enemy_pieces: &vec![&p3],
+    let mut board = Board {
+        my_pieces: vec![p1, p2],
+        enemy_pieces: vec![p3],
     };
 
-    let possible_moves = p1.possible_moves(&board);
-    print!("le board:\n{}", board)
+    print!("starting board:\n{}", board);
+
+    for i in 1..6 {
+        let possible_actions = board.possible_actions();
+        let action = possible_actions.choose(&mut rand::thread_rng()).unwrap();
+        board = board.play(action).unwrap();
+        print!("after move #{}:\n{}\n", i, board);
+    }
 }
 
 #[test]
@@ -258,8 +301,8 @@ fn pawn_possible_moves() {
     let enemy1 = Piece::new(Position::new(1, 2), false);
     let enemy2 = Piece::new(Position::new(2, 3), false);
     let board = Board {
-        my_pieces: &vec![&me1, &me2, &me3, &me4, &me5],
-        enemy_pieces: &vec![&enemy1, &enemy2],
+        my_pieces: vec![me1, me2, me3, me4, me5],
+        enemy_pieces: vec![enemy1, enemy2],
     };
 
     assert_eq!(
@@ -304,8 +347,8 @@ fn pawn_possible_strikes() {
     let enemy4 = Piece::new(Position::new(4, 5), false);
     let enemy5 = Piece::new(Position::new(1, 2), false);
     let board = Board {
-        my_pieces: &vec![&me1, &me2, &me3, &me4, &me5],
-        enemy_pieces: &vec![&enemy1, &enemy2, &enemy3, &enemy4, &enemy5],
+        my_pieces: vec![me1, me2, me3, me4, me5],
+        enemy_pieces: vec![enemy1, enemy2, enemy3, enemy4, enemy5],
     };
 
     assert_eq!(
@@ -347,22 +390,26 @@ fn board_possible_actions() {
     let p2 = Piece::new(Position { x: 3, y: 2 }, false);
     let p3 = Piece::new(Position { x: 1, y: 2 }, false);
     let board = Board {
-        my_pieces: &vec![&p1, &p2],
-        enemy_pieces: &vec![&p3],
+        my_pieces: vec![p1, p2],
+        enemy_pieces: vec![p3],
     };
 
     let expected = vec![
         PieceAction {
             piece: &p1,
-            moves: vec![
-                Position::new(0, 2),
-                Position::new(0, 3),
-                Position::new(1, 2),
-            ],
+            destination: Position::new(0, 2),
+        },
+        PieceAction {
+            piece: &p1,
+            destination: Position::new(0, 3),
+        },
+        PieceAction {
+            piece: &p1,
+            destination: Position::new(1, 2),
         },
         PieceAction {
             piece: &p2,
-            moves: vec![Position::new(3, 3)],
+            destination: Position::new(3, 3),
         },
     ];
     assert_eq!(expected, board.possible_actions());
@@ -373,10 +420,11 @@ fn swap_sides() {
     let p1 = Piece::new(Position { x: 0, y: 1 }, true);
     let p2 = Piece::new(Position { x: 1, y: 1 }, true);
     let p3 = Piece::new(Position { x: 0, y: 6 }, true);
-    let board = Board {
-        my_pieces: &vec![&p1, &p2],
-        enemy_pieces: &vec![&p3],
+    let mut board = Board {
+        my_pieces: vec![p1, p2],
+        enemy_pieces: vec![p3],
     };
-    let board = board.swap_sides();
-    assert_eq!(&vec![&p3], board.my_pieces);
+    board.swap_sides();
+    assert_eq!(vec![p3], board.my_pieces);
+    assert_eq!(vec![p1, p2], board.enemy_pieces);
 }
