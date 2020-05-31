@@ -92,8 +92,16 @@ impl Board {
         actions
     }
 
-    fn swap_sides(&mut self) {
-        std::mem::swap(&mut self.my_pieces, &mut self.enemy_pieces);
+    fn swap_sides(&self) -> Board {
+        // std::mem::swap(&mut self.my_pieces, &mut self.enemy_pieces);
+        let mut swapped_board = Board {
+            enemy_pieces: self.my_pieces.clone(),
+            my_pieces: self.enemy_pieces.clone(),
+        };
+
+        swap_positions(&mut swapped_board.enemy_pieces);
+        swap_positions(&mut swapped_board.my_pieces);
+        swapped_board
     }
 
     fn play(&self, action: &PieceAction) -> Result<Board, Error> {
@@ -122,9 +130,13 @@ impl Board {
             .find(|piece| piece == &action.piece)
             .unwrap()
             .set_position(action.destination);
-
-        output_board.swap_sides();
         Ok(output_board)
+    }
+}
+
+fn swap_positions(pieces: &mut Vec<Piece>) {
+    for piece in pieces.iter_mut() {
+        piece.swap_position();
     }
 }
 
@@ -261,6 +273,10 @@ impl Piece {
     fn set_position(&mut self, position: Position) {
         self.position = position;
     }
+
+    fn swap_position(&mut self) {
+        self.position.y = 7 - self.position.y
+    }
 }
 
 fn main() {
@@ -272,13 +288,14 @@ fn main() {
         enemy_pieces: vec![p3],
     };
 
-    print!("starting board:\n{}", board);
-
     for i in 1..6 {
+        print!("starting board:\n{}\n", board);
         let possible_actions = board.possible_actions();
+        print!("possible actions:{:?}\n", possible_actions);
         let action = possible_actions.choose(&mut rand::thread_rng()).unwrap();
         board = board.play(action).unwrap();
         print!("after move #{}:\n{}\n", i, board);
+        board = board.swap_sides()
     }
 }
 
@@ -424,7 +441,16 @@ fn swap_sides() {
         my_pieces: vec![p1, p2],
         enemy_pieces: vec![p3],
     };
-    board.swap_sides();
-    assert_eq!(vec![p3], board.my_pieces);
-    assert_eq!(vec![p1, p2], board.enemy_pieces);
+    board = board.swap_sides();
+    assert_eq!(
+        vec![Piece::new(Position { x: 0, y: 1 }, true)],
+        board.my_pieces
+    );
+    assert_eq!(
+        vec![
+            Piece::new(Position { x: 0, y: 6 }, true),
+            Piece::new(Position { x: 1, y: 6 }, true)
+        ],
+        board.enemy_pieces
+    );
 }
