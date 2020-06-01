@@ -42,22 +42,22 @@ impl Piece {
         moves
     }
 
-    fn possible_strikes<'a>(&self, board: &Board) -> Vec<Position> {
-        let mut strikes = Vec::new();
-        let strike_directions = vec![Direction::UpLeft, Direction::UpRight];
-        for direction in strike_directions {
-            if let Ok(strike_position) = self.position.move_copy(direction, 1) {
-                if let Some(_) = board.enemy_collision(strike_position) {
-                    strikes.push(strike_position);
+    fn possible_captures<'a>(&self, board: &Board) -> Vec<Position> {
+        let mut captures = Vec::new();
+        let capture_directions = vec![Direction::UpLeft, Direction::UpRight];
+        for direction in capture_directions {
+            if let Ok(capture_pos) = self.position.move_copy(direction, 1) {
+                if let Some(_) = board.enemy_collision(capture_pos) {
+                    captures.push(capture_pos);
                 }
             }
         }
-        strikes
+        captures
     }
 
     pub fn possible_actions<'a>(&self, board: &Board) -> Vec<Position> {
         let mut actions = self.possible_moves(&board);
-        actions.extend(self.possible_strikes(&board));
+        actions.extend(self.possible_captures(&board));
         actions
     }
 
@@ -92,7 +92,7 @@ pub fn to_space<'a>(pieces: &'a Vec<Piece>) -> [Option<&'a Piece>; 64] {
 }
 
 #[test]
-fn pawn_possible_strikes() {
+fn pawn_possible_captures() {
     let me2 = Piece::new(Position::new(7, 1), true);
     let me1 = Piece::new(Position::new(3, 1), true);
     let me3 = Piece::new(Position::new(1, 4), true);
@@ -111,32 +111,32 @@ fn pawn_possible_strikes() {
 
     assert_eq!(
         vec![enemy1.position, enemy2.position],
-        me1.possible_strikes(&board),
-        "pawn {} strikes",
+        me1.possible_captures(&board),
+        "pawn {} captures",
         me1.position
     );
     assert_eq!(
         vec![enemy3.position],
-        me2.possible_strikes(&board),
-        "pawn {} strikes on the right edge",
+        me2.possible_captures(&board),
+        "pawn {} captures on the right edge",
         me2.position
     );
     assert_eq!(
         vec![enemy5.position],
-        me5.possible_strikes(&board),
-        "pawn {} strikes on the left edge",
+        me5.possible_captures(&board),
+        "pawn {} captures on the left edge",
         me5.position
     );
     let empty_pos: Vec<Position> = Vec::new();
     assert_eq!(
         empty_pos,
-        me3.possible_strikes(&board),
+        me3.possible_captures(&board),
         "pawn {} no targets",
         me3.position
     );
     assert_eq!(
         vec![enemy4.position],
-        me4.possible_strikes(&board),
+        me4.possible_captures(&board),
         "pawn {} one target",
         me4.position
     );
