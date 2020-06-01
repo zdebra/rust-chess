@@ -1,29 +1,8 @@
 use super::{board::Board, position::Direction, position::Position};
 
-pub fn swap_positions(pieces: &mut Vec<Piece>) {
-    for piece in pieces.iter_mut() {
-        piece.swap_position();
-    }
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct PieceAction<'a> {
-    pub piece: &'a Piece,
-    pub destination: Position,
-}
-
-pub fn to_space<'a>(pieces: &'a Vec<Piece>) -> [Option<&'a Piece>; 64] {
-    let mut board: [Option<&Piece>; 64] = [None; 64];
-    for piece in pieces {
-        let arr_pos = piece.position.arr_pos();
-        board[arr_pos] = Some(piece);
-    }
-    board
-}
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Piece {
-    pub position: Position,
+    position: Position,
     starting_position: bool,
 }
 
@@ -35,6 +14,10 @@ impl Piece {
         }
     }
 
+    pub fn get_position(&self) -> Position {
+        self.position
+    }
+
     fn possible_moves<'a>(&self, board: &Board) -> Vec<Position> {
         let mut moves = Vec::new();
         let adjacent_pos = match self.position.move_copy(Direction::Up, 1) {
@@ -42,7 +25,7 @@ impl Piece {
             Err(_) => return moves,
         };
 
-        if let Some(_) = board.collision(&adjacent_pos) {
+        if let Some(_) = board.collision(adjacent_pos) {
             return moves;
         }
         moves.push(adjacent_pos);
@@ -52,7 +35,7 @@ impl Piece {
             Err(_) => return moves,
         };
         if self.starting_position {
-            if let None = board.collision(&starting_move_pos) {
+            if let None = board.collision(starting_move_pos) {
                 moves.push(starting_move_pos);
             }
         }
@@ -64,7 +47,7 @@ impl Piece {
         let strike_directions = vec![Direction::UpLeft, Direction::UpRight];
         for direction in strike_directions {
             if let Ok(strike_position) = self.position.move_copy(direction, 1) {
-                if let Some(_) = board.enemy_collision(&strike_position) {
+                if let Some(_) = board.enemy_collision(strike_position) {
                     strikes.push(strike_position);
                 }
             }
@@ -85,6 +68,27 @@ impl Piece {
     fn swap_position(&mut self) {
         self.position.y = 7 - self.position.y
     }
+}
+
+pub fn swap_positions(pieces: &mut Vec<Piece>) {
+    for piece in pieces.iter_mut() {
+        piece.swap_position();
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Action<'a> {
+    pub piece: &'a Piece,
+    pub destination: Position,
+}
+
+pub fn to_space<'a>(pieces: &'a Vec<Piece>) -> [Option<&'a Piece>; 64] {
+    let mut board: [Option<&Piece>; 64] = [None; 64];
+    for piece in pieces {
+        let arr_pos = piece.position.arr_pos();
+        board[arr_pos] = Some(piece);
+    }
+    board
 }
 
 #[test]

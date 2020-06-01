@@ -1,5 +1,5 @@
 use super::errors::Error;
-use super::pieces::{swap_positions, to_space, Piece, PieceAction};
+use super::pieces::{swap_positions, to_space, Piece, Action};
 use super::position::Position;
 use std::fmt;
 
@@ -47,23 +47,23 @@ impl fmt::Display for Board {
 }
 
 impl Board {
-    fn my_collision(&self, position: &Position) -> Option<&Piece> {
+    fn my_collision(&self, position: Position) -> Option<&Piece> {
         for piece in self.my_pieces.iter() {
-            if &piece.position == position {
+            if piece.get_position() == position {
                 return Some(piece);
             }
         }
         None
     }
-    pub fn enemy_collision(&self, position: &Position) -> Option<&Piece> {
+    pub fn enemy_collision(&self, position: Position) -> Option<&Piece> {
         for piece in self.enemy_pieces.iter() {
-            if &piece.position == position {
+            if piece.get_position() == position {
                 return Some(piece);
             }
         }
         None
     }
-    pub fn collision(&self, position: &Position) -> Option<&Piece> {
+    pub fn collision(&self, position: Position) -> Option<&Piece> {
         if let Some(my_piece) = self.my_collision(position) {
             Some(my_piece)
         } else if let Some(enemy_piece) = self.enemy_collision(position) {
@@ -73,11 +73,11 @@ impl Board {
         }
     }
 
-    pub fn possible_actions(&self) -> Vec<PieceAction> {
+    pub fn possible_actions(&self) -> Vec<Action> {
         let mut actions = Vec::new();
         for piece in self.my_pieces.iter() {
             for action in piece.possible_actions(&self) {
-                actions.push(PieceAction {
+                actions.push(Action {
                     piece: piece,
                     destination: action,
                 });
@@ -98,7 +98,7 @@ impl Board {
         swapped_board
     }
 
-    pub fn play(&self, action: &PieceAction) -> Result<Board, Error> {
+    pub fn play(&self, action: &Action) -> Result<Board, Error> {
         if !self.possible_actions().iter().any(|a| a == action) {
             return Err(Error::InvalidAction);
         }
@@ -109,7 +109,7 @@ impl Board {
             enemy_pieces: self.enemy_pieces.clone(),
         };
 
-        if let Some(enemy_piece) = self.enemy_collision(&action.destination) {
+        if let Some(enemy_piece) = self.enemy_collision(action.destination) {
             let enemy_piece_index = self
                 .enemy_pieces
                 .iter()
@@ -139,19 +139,19 @@ fn board_possible_actions() {
     };
 
     let expected = vec![
-        PieceAction {
+        Action {
             piece: &p1,
             destination: Position::new(0, 2),
         },
-        PieceAction {
+        Action {
             piece: &p1,
             destination: Position::new(0, 3),
         },
-        PieceAction {
+        Action {
             piece: &p1,
             destination: Position::new(1, 2),
         },
-        PieceAction {
+        Action {
             piece: &p2,
             destination: Position::new(3, 3),
         },
