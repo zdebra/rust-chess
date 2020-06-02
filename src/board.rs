@@ -1,11 +1,11 @@
 use super::errors::Error;
-use super::pieces::{swap_positions, to_space, Piece, Action};
+use super::pieces::{swap_positions, to_space, Action, Piece};
 use super::position::Position;
 use std::fmt;
 
 pub struct Board {
-    pub my_pieces: Vec<Piece>,
-    pub enemy_pieces: Vec<Piece>,
+    pub my_pieces: Vec<Box<dyn Piece>>,
+    pub enemy_pieces: Vec<Box<dyn Piece>>,
 }
 
 impl fmt::Display for Board {
@@ -47,7 +47,7 @@ impl fmt::Display for Board {
 }
 
 impl Board {
-    fn my_collision(&self, position: Position) -> Option<&Piece> {
+    fn my_collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
         for piece in self.my_pieces.iter() {
             if piece.get_position() == position {
                 return Some(piece);
@@ -55,7 +55,7 @@ impl Board {
         }
         None
     }
-    pub fn enemy_collision(&self, position: Position) -> Option<&Piece> {
+    pub fn enemy_collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
         for piece in self.enemy_pieces.iter() {
             if piece.get_position() == position {
                 return Some(piece);
@@ -63,7 +63,7 @@ impl Board {
         }
         None
     }
-    pub fn collision(&self, position: Position) -> Option<&Piece> {
+    pub fn collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
         if let Some(my_piece) = self.my_collision(position) {
             Some(my_piece)
         } else if let Some(enemy_piece) = self.enemy_collision(position) {
@@ -78,7 +78,7 @@ impl Board {
         for piece in self.my_pieces.iter() {
             for action in piece.possible_actions(&self) {
                 actions.push(Action {
-                    piece: piece,
+                    source: piece.get_position(),
                     destination: action,
                 });
             }
@@ -86,73 +86,64 @@ impl Board {
         actions
     }
 
-    pub fn swap_sides(&self) -> Board {
-        // std::mem::swap(&mut self.my_pieces, &mut self.enemy_pieces);
-        let mut swapped_board = Board {
-            enemy_pieces: self.my_pieces.clone(),
-            my_pieces: self.enemy_pieces.clone(),
-        };
-
-        swap_positions(&mut swapped_board.enemy_pieces);
-        swap_positions(&mut swapped_board.my_pieces);
-        swapped_board
+    pub fn swap_sides(&mut self) {
+        std::mem::swap(&mut self.my_pieces, &mut self.enemy_pieces);
+        swap_positions(&mut self.enemy_pieces);
+        swap_positions(&mut self.my_pieces);
     }
 
-    pub fn play(&self, action: &Action) -> Result<Board, Error> {
+    pub fn play(&mut self, action: &Action) -> Result<(), Error> {
         if !self.possible_actions().iter().any(|a| a == action) {
             return Err(Error::InvalidAction);
         }
-
-        // TODO: get rid of clone
-        let mut output_board = Board {
-            my_pieces: self.my_pieces.clone(),
-            enemy_pieces: self.enemy_pieces.clone(),
-        };
-
         if let Some(enemy_piece) = self.enemy_collision(action.destination) {
             let enemy_piece_index = self
                 .enemy_pieces
                 .iter()
                 .position(|piece| piece == enemy_piece)
                 .unwrap();
-            output_board.enemy_pieces.remove(enemy_piece_index);
+            self.enemy_pieces.remove(enemy_piece_index);
         }
 
-        output_board
-            .my_pieces
+        self.my_pieces
             .iter_mut()
-            .find(|piece| piece == &action.piece)
+            .find(|piece| piece.get_position() == action.source)
             .unwrap()
             .set_position(action.destination);
-        Ok(output_board)
+        Ok(())
     }
 }
 
 #[test]
 fn board_possible_actions() {
-    let p1 = Piece::new(Position { x: 0, y: 1 }, true);
-    let p2 = Piece::new(Position { x: 3, y: 2 }, false);
-    let p3 = Piece::new(Position { x: 1, y: 2 }, false);
+    use super::pieces::Pawn;
+
+    let p1_pos = Position { x: 0, y: 1 };
+    let p2_pos = Position { x: 3, y: 2 };
+    let p3_pos = Position { x: 1, y: 2 };
+    let p1 = Pawn::new(p1_pos, true);
+    let p2 = Pawn::new(p2_pos, false);
+    let p3 = Pawn::new(p3_pos, false);
     let board = Board {
-        my_pieces: vec![p1, p2],
-        enemy_pieces: vec![p3],
+        my_pieces: vec![Box::new(p1), Box::new(p2)],
+        enemy_pieces: vec![Box::new(p3)],
     };
 
     let expected = vec![
         Action {
-            piece: &p1,
+            source: p1_pos,
             destination: Position::new(0, 2),
         },
         Action {
-            piece: &p1,
+            source: p1_pos,
             destination: Position::new(0, 3),
         },
         Action {
-            piece: &p1,
+            source: p1_pos,
             destination: Position::new(1, 2),
         },
         Action {
-            piece: &p2,
+            source: p2_pos,
             destination: Position::new(3, 3),
         },
     ];
@@ -161,23 +152,20 @@ fn board_possible_actions() {
 
 #[test]
 fn swap_sides() {
-    let p1 = Piece::new(Position { x: 0, y: 1 }, true);
-    let p2 = Piece::new(Position { x: 1, y: 1 }, true);
-    let p3 = Piece::new(Position { x: 0, y: 6 }, true);
+    use super::pieces::Pawn;
+    let p1 = Pawn::new(Position { x: 0, y: 1 }, true);
+    let p2 = Pawn::new(Position { x: 1, y: 1 }, true);
+    let p3 = Pawn::new(Position { x: 0, y: 6 }, true);
     let mut board = Board {
-        my_pieces: vec![p1, p2],
-        enemy_pieces: vec![p3],
+        my_pieces: vec![Box::new(p1), Box::new(p2)],
+        enemy_pieces: vec![Box::new(p3)],
     };
-    board = board.swap_sides();
-    assert_eq!(
-        vec![Piece::new(Position { x: 0, y: 1 }, true)],
-        board.my_pieces
-    );
-    assert_eq!(
-        vec![
-            Piece::new(Position { x: 0, y: 6 }, true),
-            Piece::new(Position { x: 1, y: 6 }, true)
-        ],
-        board.enemy_pieces
-    );
+    board.swap_sides();
+    let expected: Vec<Box<dyn Piece>> = vec![Box::new(Pawn::new(Position { x: 0, y: 1 }, true))];
+    assert_eq!(expected, board.my_pieces);
+    let expected: Vec<Box<dyn Piece>> = vec![
+        Box::new(Pawn::new(Position { x: 0, y: 6 }, true)),
+        Box::new(Pawn::new(Position { x: 1, y: 6 }, true)),
+    ];
+    assert_eq!(expected, board.enemy_pieces);
 }

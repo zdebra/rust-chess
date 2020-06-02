@@ -1,24 +1,54 @@
 use super::{board::Board, position::Direction, position::Position};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct Piece {
+pub trait Piece: std::fmt::Debug {
+    fn get_position(&self) -> Position;
+    fn set_position(&mut self, position: Position);
+    fn possible_moves(&self, board: &Board) -> Vec<Position>;
+    fn possible_captures(&self, board: &Board) -> Vec<Position>;
+
+    fn possible_actions(&self, board: &Board) -> Vec<Position> {
+        let mut actions = self.possible_moves(&board);
+        actions.extend(self.possible_captures(&board));
+        actions
+    }
+
+    fn swap_position(&mut self) {
+        let pos = self.get_position();
+        self.set_position(Position::new(pos.x, 7 - pos.y));
+    }
+}
+
+impl PartialEq for dyn Piece {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_position() == other.get_position()
+    }
+}
+impl Eq for dyn Piece {}
+
+#[derive(Debug, Copy, Clone)]
+pub struct Pawn {
     position: Position,
     starting_position: bool,
 }
 
-impl Piece {
-    pub fn new(position: Position, starting_position: bool) -> Piece {
-        Piece {
+impl Pawn {
+    pub fn new(position: Position, starting_position: bool) -> Pawn {
+        Pawn {
             position,
             starting_position,
         }
     }
+}
 
-    pub fn get_position(&self) -> Position {
+impl Piece for Pawn {
+    fn get_position(&self) -> Position {
         self.position
     }
+    fn set_position(&mut self, position: Position) {
+        self.position = position;
+    }
 
-    fn possible_moves<'a>(&self, board: &Board) -> Vec<Position> {
+    fn possible_moves(&self, board: &Board) -> Vec<Position> {
         let mut moves = Vec::new();
         let adjacent_pos = match self.position.move_copy(Direction::Up, 1) {
             Ok(pos) => pos,
@@ -42,7 +72,7 @@ impl Piece {
         moves
     }
 
-    fn possible_captures<'a>(&self, board: &Board) -> Vec<Position> {
+    fn possible_captures(&self, board: &Board) -> Vec<Position> {
         let mut captures = Vec::new();
         let capture_directions = vec![Direction::UpLeft, Direction::UpRight];
         for direction in capture_directions {
@@ -54,38 +84,24 @@ impl Piece {
         }
         captures
     }
-
-    pub fn possible_actions<'a>(&self, board: &Board) -> Vec<Position> {
-        let mut actions = self.possible_moves(&board);
-        actions.extend(self.possible_captures(&board));
-        actions
-    }
-
-    pub fn set_position(&mut self, position: Position) {
-        self.position = position;
-    }
-
-    fn swap_position(&mut self) {
-        self.position.y = 7 - self.position.y
-    }
 }
 
-pub fn swap_positions(pieces: &mut Vec<Piece>) {
+pub fn swap_positions(pieces: &mut Vec<Box<dyn Piece>>) {
     for piece in pieces.iter_mut() {
         piece.swap_position();
     }
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct Action<'a> {
-    pub piece: &'a Piece,
+pub struct Action {
+    pub source: Position,
     pub destination: Position,
 }
 
-pub fn to_space<'a>(pieces: &'a Vec<Piece>) -> [Option<&'a Piece>; 64] {
-    let mut board: [Option<&Piece>; 64] = [None; 64];
+pub fn to_space<'a>(pieces: &'a Vec<Box<dyn Piece>>) -> [Option<&'a Box<dyn Piece>>; 64] {
+    let mut board: [Option<&Box<dyn Piece>>; 64] = [None; 64];
     for piece in pieces {
-        let arr_pos = piece.position.arr_pos();
+        let arr_pos = piece.get_position().arr_pos();
         board[arr_pos] = Some(piece);
     }
     board
@@ -93,20 +109,32 @@ pub fn to_space<'a>(pieces: &'a Vec<Piece>) -> [Option<&'a Piece>; 64] {
 
 #[test]
 fn pawn_possible_captures() {
-    let me2 = Piece::new(Position::new(7, 1), true);
-    let me1 = Piece::new(Position::new(3, 1), true);
-    let me3 = Piece::new(Position::new(1, 4), true);
-    let me4 = Piece::new(Position::new(3, 4), true);
-    let me5 = Piece::new(Position::new(0, 1), true);
+    let me1 = Pawn::new(Position::new(3, 1), true);
+    let me2 = Pawn::new(Position::new(7, 1), true);
+    let me3 = Pawn::new(Position::new(1, 4), true);
+    let me4 = Pawn::new(Position::new(3, 4), true);
+    let me5 = Pawn::new(Position::new(0, 1), true);
 
-    let enemy1 = Piece::new(Position::new(2, 2), false);
-    let enemy2 = Piece::new(Position::new(4, 2), false);
-    let enemy3 = Piece::new(Position::new(6, 2), false);
-    let enemy4 = Piece::new(Position::new(4, 5), false);
-    let enemy5 = Piece::new(Position::new(1, 2), false);
+    let enemy1 = Pawn::new(Position::new(2, 2), false);
+    let enemy2 = Pawn::new(Position::new(4, 2), false);
+    let enemy3 = Pawn::new(Position::new(6, 2), false);
+    let enemy4 = Pawn::new(Position::new(4, 5), false);
+    let enemy5 = Pawn::new(Position::new(1, 2), false);
     let board = Board {
-        my_pieces: vec![me1, me2, me3, me4, me5],
-        enemy_pieces: vec![enemy1, enemy2, enemy3, enemy4, enemy5],
+        my_pieces: vec![
+            Box::new(me1),
+            Box::new(me2),
+            Box::new(me3),
+            Box::new(me4),
+            Box::new(me5),
+        ],
+        enemy_pieces: vec![
+            Box::new(enemy1),
+            Box::new(enemy2),
+            Box::new(enemy3),
+            Box::new(enemy4),
+            Box::new(enemy5),
+        ],
     };
 
     assert_eq!(
@@ -144,16 +172,22 @@ fn pawn_possible_captures() {
 
 #[test]
 fn pawn_possible_moves() {
-    let me1 = Piece::new(Position::new(0, 1), true);
-    let me2 = Piece::new(Position::new(1, 1), true);
-    let me3 = Piece::new(Position::new(2, 1), true);
-    let me4 = Piece::new(Position::new(3, 2), false);
-    let me5 = Piece::new(Position::new(4, 7), false);
-    let enemy1 = Piece::new(Position::new(1, 2), false);
-    let enemy2 = Piece::new(Position::new(2, 3), false);
+    let me1 = Pawn::new(Position::new(0, 1), true);
+    let me2 = Pawn::new(Position::new(1, 1), true);
+    let me3 = Pawn::new(Position::new(2, 1), true);
+    let me4 = Pawn::new(Position::new(3, 2), false);
+    let me5 = Pawn::new(Position::new(4, 7), false);
+    let enemy1 = Pawn::new(Position::new(1, 2), false);
+    let enemy2 = Pawn::new(Position::new(2, 3), false);
     let board = Board {
-        my_pieces: vec![me1, me2, me3, me4, me5],
-        enemy_pieces: vec![enemy1, enemy2],
+        my_pieces: vec![
+            Box::new(me1),
+            Box::new(me2),
+            Box::new(me3),
+            Box::new(me4),
+            Box::new(me5),
+        ],
+        enemy_pieces: vec![Box::new(enemy1), Box::new(enemy2)],
     };
 
     assert_eq!(

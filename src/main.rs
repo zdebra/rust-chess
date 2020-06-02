@@ -5,12 +5,12 @@ mod pieces;
 mod position;
 
 fn main() {
-    let p1 = pieces::Piece::new(position::Position { x: 0, y: 1 }, true);
-    let p2 = pieces::Piece::new(position::Position { x: 1, y: 1 }, true);
-    let p3 = pieces::Piece::new(position::Position { x: 0, y: 6 }, true);
+    let p1 = pieces::Pawn::new(position::Position { x: 0, y: 1 }, true);
+    let p2 = pieces::Pawn::new(position::Position { x: 1, y: 1 }, true);
+    let p3 = pieces::Pawn::new(position::Position { x: 0, y: 6 }, true);
     let mut board = board::Board {
-        my_pieces: vec![p1, p2],
-        enemy_pieces: vec![p3],
+        my_pieces: vec![Box::new(p1), Box::new(p2)],
+        enemy_pieces: vec![Box::new(p3)],
     };
 
     for i in 1..6 {
@@ -18,8 +18,8 @@ fn main() {
         let possible_actions = board.possible_actions();
         // print!("possible actions:{:?}\n", possible_actions);
         let action = possible_actions.choose(&mut rand::thread_rng()).unwrap();
-        board = board.play(action).unwrap();
+        board.play(action).unwrap();
         print!("after move #{}:\n{}\n", i, board);
-        board = board.swap_sides()
+        board.swap_sides()
     }
 }
