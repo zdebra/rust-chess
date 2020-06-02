@@ -5,6 +5,7 @@ pub trait Piece: std::fmt::Debug {
     fn set_position(&mut self, position: Position);
     fn possible_moves(&self, board: &Board) -> Vec<Position>;
     fn possible_captures(&self, board: &Board) -> Vec<Position>;
+    fn icon(&self) -> Icon;
 
     fn possible_actions(&self, board: &Board) -> Vec<Position> {
         let mut actions = self.possible_moves(&board);
@@ -46,6 +47,12 @@ impl Piece for Pawn {
     }
     fn set_position(&mut self, position: Position) {
         self.position = position;
+    }
+    fn icon(&self) -> Icon {
+        Icon {
+            dark: "♟",
+            light: "♙",
+        }
     }
 
     fn possible_moves(&self, board: &Board) -> Vec<Position> {
@@ -105,6 +112,11 @@ pub fn to_space<'a>(pieces: &'a Vec<Box<dyn Piece>>) -> [Option<&'a Box<dyn Piec
         board[arr_pos] = Some(piece);
     }
     board
+}
+
+pub struct Icon {
+    pub dark: &'static str,
+    pub light: &'static str,
 }
 
 #[test]

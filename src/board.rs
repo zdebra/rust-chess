@@ -19,8 +19,8 @@ impl fmt::Display for Board {
             .zip(enemy_pieces_space.iter())
             .rev()
             .map(|(my_place, enemy_place)| match (my_place, enemy_place) {
-                (Some(_), None) => "♙".to_string(),
-                (None, Some(_)) => "♟".to_string(),
+                (Some(piece), None) => piece.icon().light.to_string(),
+                (None, Some(piece)) => piece.icon().dark.to_string(),
                 _ => ".".to_string(),
             })
             .collect();
