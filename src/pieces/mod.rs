@@ -1,4 +1,6 @@
-use super::{board::Board, position::Direction, position::Position};
+use super::{board::Board, position::Position};
+pub mod pawn;
+pub use pawn::Pawn;
 
 pub trait Piece: std::fmt::Debug {
     fn get_position(&self) -> Position;
@@ -25,73 +27,6 @@ impl PartialEq for dyn Piece {
     }
 }
 impl Eq for dyn Piece {}
-
-#[derive(Debug, Copy, Clone)]
-pub struct Pawn {
-    position: Position,
-    starting_position: bool,
-}
-
-impl Pawn {
-    pub fn new(position: Position, starting_position: bool) -> Pawn {
-        Pawn {
-            position,
-            starting_position,
-        }
-    }
-}
-
-impl Piece for Pawn {
-    fn get_position(&self) -> Position {
-        self.position
-    }
-    fn set_position(&mut self, position: Position) {
-        self.position = position;
-    }
-    fn icon(&self) -> Icon {
-        Icon {
-            dark: "♟",
-            light: "♙",
-        }
-    }
-
-    fn possible_moves(&self, board: &Board) -> Vec<Position> {
-        let mut moves = Vec::new();
-        let adjacent_pos = match self.position.move_copy(Direction::Up, 1) {
-            Ok(pos) => pos,
-            Err(_) => return moves,
-        };
-
-        if let Some(_) = board.collision(adjacent_pos) {
-            return moves;
-        }
-        moves.push(adjacent_pos);
-
-        let starting_move_pos = match self.position.move_copy(Direction::Up, 2) {
-            Ok(pos) => pos,
-            Err(_) => return moves,
-        };
-        if self.starting_position {
-            if let None = board.collision(starting_move_pos) {
-                moves.push(starting_move_pos);
-            }
-        }
-        moves
-    }
-
-    fn possible_captures(&self, board: &Board) -> Vec<Position> {
-        let mut captures = Vec::new();
-        let capture_directions = vec![Direction::UpLeft, Direction::UpRight];
-        for direction in capture_directions {
-            if let Ok(capture_pos) = self.position.move_copy(direction, 1) {
-                if let Some(_) = board.enemy_collision(capture_pos) {
-                    captures.push(capture_pos);
-                }
-            }
-        }
-        captures
-    }
-}
 
 pub fn swap_positions(pieces: &mut Vec<Box<dyn Piece>>) {
     for piece in pieces.iter_mut() {
@@ -150,35 +85,35 @@ fn pawn_possible_captures() {
     };
 
     assert_eq!(
-        vec![enemy1.position, enemy2.position],
+        vec![enemy1.get_position(), enemy2.get_position()],
         me1.possible_captures(&board),
         "pawn {} captures",
-        me1.position
+        me1.get_position()
     );
     assert_eq!(
-        vec![enemy3.position],
+        vec![enemy3.get_position()],
         me2.possible_captures(&board),
         "pawn {} captures on the right edge",
-        me2.position
+        me2.get_position()
     );
     assert_eq!(
-        vec![enemy5.position],
+        vec![enemy5.get_position()],
         me5.possible_captures(&board),
         "pawn {} captures on the left edge",
-        me5.position
+        me5.get_position()
     );
     let empty_pos: Vec<Position> = Vec::new();
     assert_eq!(
         empty_pos,
         me3.possible_captures(&board),
         "pawn {} no targets",
-        me3.position
+        me3.get_position()
     );
     assert_eq!(
-        vec![enemy4.position],
+        vec![enemy4.get_position()],
         me4.possible_captures(&board),
         "pawn {} one target",
-        me4.position
+        me4.get_position()
     );
 }
 
