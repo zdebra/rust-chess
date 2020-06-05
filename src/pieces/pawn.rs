@@ -30,6 +30,9 @@ impl Piece for Pawn {
         }
     }
 
+    /// Returns pawn's possible moves:
+    /// - 1 move up
+    /// - 2 moves up on starting position
     fn possible_moves(&self, board: &Board) -> Vec<Position> {
         let mut moves = Vec::new();
         let adjacent_pos = match self.position.move_copy(Direction::Up, 1) {
@@ -54,6 +57,8 @@ impl Piece for Pawn {
         moves
     }
 
+    /// Returns pawn's possible captures:
+    /// - 1 move in up-left or up-right directions
     fn possible_captures(&self, board: &Board) -> Vec<Position> {
         let mut captures = Vec::new();
         let capture_directions = vec![Direction::UpLeft, Direction::UpRight];
