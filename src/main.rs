@@ -5,18 +5,36 @@ mod pieces;
 mod position;
 
 fn main() {
-    let p1 = pieces::Pawn::new(position::Position { x: 0, y: 1 }, true);
-    let p2 = pieces::Pawn::new(position::Position { x: 1, y: 1 }, true);
-    let p3 = pieces::Pawn::new(position::Position { x: 0, y: 6 }, true);
     let mut board = board::Board {
-        my_pieces: vec![Box::new(p1), Box::new(p2)],
-        enemy_pieces: vec![Box::new(p3)],
+        my_pieces: vec![
+            Box::new(pieces::Pawn::new(position::Position { x: 0, y: 1 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 1, y: 1 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 2, y: 1 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 3, y: 1 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 4, y: 1 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 5, y: 1 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 6, y: 1 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 7, y: 1 }, true)),
+            Box::new(pieces::Rook::new(position::Position { x: 0, y: 0 })),
+            Box::new(pieces::Rook::new(position::Position { x: 7, y: 0 })),
+        ],
+        enemy_pieces: vec![
+            Box::new(pieces::Pawn::new(position::Position { x: 0, y: 6 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 1, y: 6 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 2, y: 6 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 3, y: 6 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 4, y: 6 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 5, y: 6 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 6, y: 6 }, true)),
+            Box::new(pieces::Pawn::new(position::Position { x: 7, y: 6 }, true)),
+            Box::new(pieces::Rook::new(position::Position { x: 0, y: 7 })),
+            Box::new(pieces::Rook::new(position::Position { x: 7, y: 7 })),
+        ],
     };
 
     for i in 1..6 {
         print!("starting board:\n{}\n", board);
         let possible_actions = board.possible_actions();
-        // print!("possible actions:{:?}\n", possible_actions);
         let action = possible_actions.choose(&mut rand::thread_rng()).unwrap();
         board.play(action).unwrap();
         print!("after move #{}:\n{}\n", i, board);

@@ -7,7 +7,7 @@ pub struct Rook {
 }
 
 impl Rook {
-    fn new(position: Position) -> Self {
+    pub fn new(position: Position) -> Self {
         Rook { position }
     }
 
