@@ -13,10 +13,14 @@ impl fmt::Display for Position {
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum Direction {
     Up,
     UpRight,
     UpLeft,
+    Down,
+    Left,
+    Right,
 }
 
 impl Position {
@@ -27,8 +31,16 @@ impl Position {
     pub fn move_copy(&self, direction: Direction, amount: usize) -> Result<Position, Error> {
         let mut pos = Position::new(self.x, self.y);
         match direction {
-            Direction::Up => pos.y += amount,
+            Direction::Up => {
+                if (pos.y + amount) > 7 {
+                    return Err(Error::PositionOutOfBounds);
+                }
+                pos.y += amount
+            }
             Direction::UpRight => {
+                if (pos.y + amount) > 7 || (pos.x + amount) > 7 {
+                    return Err(Error::PositionOutOfBounds);
+                }
                 pos.x += amount;
                 pos.y += amount;
             }
@@ -38,6 +50,24 @@ impl Position {
                 }
                 pos.x -= amount;
                 pos.y += amount;
+            }
+            Direction::Down => {
+                if amount > pos.y {
+                    return Err(Error::PositionOutOfBounds);
+                }
+                pos.y -= amount;
+            }
+            Direction::Left => {
+                if amount > pos.x {
+                    return Err(Error::PositionOutOfBounds);
+                }
+                pos.x -= amount;
+            }
+            Direction::Right => {
+                if (amount + pos.x) > 7 {
+                    return Err(Error::PositionOutOfBounds);
+                }
+                pos.x += amount;
             }
         };
         if !pos.is_valid() {
@@ -54,7 +84,7 @@ impl Position {
 
     // is_valid reports whether the position lays within board bounds
     fn is_valid(&self) -> bool {
-        self.x < 8 && self.y < 7
+        self.x < 8 && self.y < 8
     }
 }
 

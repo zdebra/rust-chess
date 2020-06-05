@@ -1,6 +1,8 @@
-use super::{board::Board, position::Position};
+use super::{board::Board, position::Direction, position::Position};
 pub mod pawn;
 pub use pawn::Pawn;
+pub mod rook;
+pub use rook::Rook;
 
 pub trait Piece: std::fmt::Debug {
     fn get_position(&self) -> Position;
@@ -52,4 +54,53 @@ pub fn to_space<'a>(pieces: &'a Vec<Box<dyn Piece>>) -> [Option<&'a Box<dyn Piec
 pub struct Icon {
     pub dark: &'static str,
     pub light: &'static str,
+}
+
+fn walk_direction(cur_position: Position, direction: Direction) -> Vec<Position> {
+    let mut output = vec![];
+    let mut pos = cur_position;
+    while let Ok(next_pos) = pos.move_copy(direction, 1) {
+        output.push(next_pos);
+        pos = next_pos;
+    }
+    output
+}
+
+#[test]
+fn walk_direction_bottom_up_all_the_way() {
+    let walked = walk_direction(Position::new(0, 0), Direction::Up);
+    assert_eq!(
+        vec![
+            Position::new(0, 1),
+            Position::new(0, 2),
+            Position::new(0, 3),
+            Position::new(0, 4),
+            Position::new(0, 5),
+            Position::new(0, 6),
+            Position::new(0, 7)
+        ],
+        walked
+    );
+}
+
+#[test]
+fn walk_direction_up() {
+    let walked = walk_direction(Position::new(2, 2), Direction::Up);
+    assert_eq!(
+        vec![
+            Position::new(2, 3),
+            Position::new(2, 4),
+            Position::new(2, 5),
+            Position::new(2, 6),
+            Position::new(2, 7),
+        ],
+        walked
+    );
+}
+
+#[test]
+fn walk_direction_empty() {
+    let walked = walk_direction(Position::new(2, 7), Direction::Up);
+    let empty: Vec<Position> = vec![];
+    assert_eq!(empty, walked);
 }
