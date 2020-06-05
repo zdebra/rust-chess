@@ -8,7 +8,7 @@ pub struct Rook {
 
 impl Rook {
     pub fn new(position: Position) -> Self {
-        Rook { position }
+        Self { position }
     }
 
     fn directions() -> [Direction; 4] {

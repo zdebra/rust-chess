@@ -3,6 +3,8 @@ pub mod pawn;
 pub use pawn::Pawn;
 pub mod rook;
 pub use rook::Rook;
+pub mod bishop;
+pub use bishop::Bishop;
 
 pub trait Piece: std::fmt::Debug {
     fn get_position(&self) -> Position;

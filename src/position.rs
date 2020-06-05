@@ -16,11 +16,13 @@ impl fmt::Display for Position {
 #[derive(Copy, Clone)]
 pub enum Direction {
     Up,
-    UpRight,
-    UpLeft,
     Down,
     Left,
     Right,
+    UpRight,
+    UpLeft,
+    DownRight,
+    DownLeft,
 }
 
 impl Position {
@@ -36,20 +38,6 @@ impl Position {
                     return Err(Error::PositionOutOfBounds);
                 }
                 pos.y += amount
-            }
-            Direction::UpRight => {
-                if (pos.y + amount) > 7 || (pos.x + amount) > 7 {
-                    return Err(Error::PositionOutOfBounds);
-                }
-                pos.x += amount;
-                pos.y += amount;
-            }
-            Direction::UpLeft => {
-                if amount > pos.x || (amount + pos.y) > 7 {
-                    return Err(Error::PositionOutOfBounds);
-                }
-                pos.x -= amount;
-                pos.y += amount;
             }
             Direction::Down => {
                 if amount > pos.y {
@@ -68,6 +56,34 @@ impl Position {
                     return Err(Error::PositionOutOfBounds);
                 }
                 pos.x += amount;
+            }
+            Direction::UpRight => {
+                if (pos.y + amount) > 7 || (pos.x + amount) > 7 {
+                    return Err(Error::PositionOutOfBounds);
+                }
+                pos.x += amount;
+                pos.y += amount;
+            }
+            Direction::UpLeft => {
+                if amount > pos.x || (amount + pos.y) > 7 {
+                    return Err(Error::PositionOutOfBounds);
+                }
+                pos.x -= amount;
+                pos.y += amount;
+            }
+            Direction::DownRight => {
+                if (amount + pos.x) > 7 || amount > pos.y {
+                    return Err(Error::PositionOutOfBounds);
+                }
+                pos.x += amount;
+                pos.y -= amount;
+            }
+            Direction::DownLeft => {
+                if amount > pos.x || amount > pos.y {
+                    return Err(Error::PositionOutOfBounds);
+                }
+                pos.x -= amount;
+                pos.y -= amount;
             }
         };
         if !pos.is_valid() {
