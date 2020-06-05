@@ -25,8 +25,8 @@ impl Piece for Pawn {
     }
     fn icon(&self) -> Icon {
         Icon {
-            dark: "♟",
-            light: "♙",
+            dark: '♟',
+            light: '♙',
         }
     }
 

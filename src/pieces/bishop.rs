@@ -37,8 +37,8 @@ impl Piece for Bishop {
     }
     fn icon(&self) -> Icon {
         Icon {
-            dark: "♝",
-            light: "♙",
+            dark: '♝',
+            light: '♗',
         }
     }
 }

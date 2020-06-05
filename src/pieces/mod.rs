@@ -54,8 +54,8 @@ pub fn to_space<'a>(pieces: &'a Vec<Box<dyn Piece>>) -> [Option<&'a Box<dyn Piec
 }
 
 pub struct Icon {
-    pub dark: &'static str,
-    pub light: &'static str,
+    pub dark: char,
+    pub light: char,
 }
 
 fn walk_direction(cur_position: Position, direction: Direction) -> Vec<Position> {
