@@ -5,6 +5,8 @@ pub mod rook;
 pub use rook::Rook;
 pub mod bishop;
 pub use bishop::Bishop;
+pub mod queen;
+pub use queen::Queen;
 
 pub trait Piece: std::fmt::Debug {
     fn get_position(&self) -> Position;
