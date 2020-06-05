@@ -44,7 +44,7 @@ impl Piece for Rook {
 }
 
 #[test]
-fn rook_possible_moves_empty() {
+fn possible_moves_empty() {
     let me1 = Rook::new(Position::new(3, 3));
     let board = Board {
         my_pieces: vec![Box::new(me1)],
@@ -74,7 +74,7 @@ fn rook_possible_moves_empty() {
 }
 
 #[test]
-fn rook_possible_moves_collisions() {
+fn possible_moves_collisions() {
     let me1 = Rook::new(Position::new(3, 3));
     let enemy1 = Rook::new(Position::new(4, 3));
     let enemy2 = Rook::new(Position::new(2, 3));
@@ -99,7 +99,7 @@ fn rook_possible_moves_collisions() {
 }
 
 #[test]
-fn rook_possible_moves_some_collisions() {
+fn possible_moves_some_collisions() {
     let me1 = Rook::new(Position::new(3, 3));
     let me2 = Rook::new(Position::new(4, 3));
     let enemy2 = Rook::new(Position::new(2, 3));
@@ -122,7 +122,7 @@ fn rook_possible_moves_some_collisions() {
 }
 
 #[test]
-fn rook_possible_captures_some_collisions() {
+fn possible_captures_some_collisions() {
     let me1 = Rook::new(Position::new(3, 3));
     let me2 = Rook::new(Position::new(4, 3));
     let enemy2 = Rook::new(Position::new(2, 3));
@@ -141,7 +141,7 @@ fn rook_possible_captures_some_collisions() {
 }
 
 #[test]
-fn rook_possible_captures_no_enemies() {
+fn possible_captures_no_enemies() {
     let me1 = Rook::new(Position::new(3, 3));
     let me2 = Rook::new(Position::new(4, 3));
     let enemy1 = Rook::new(Position::new(0, 0));

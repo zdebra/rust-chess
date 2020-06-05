@@ -44,7 +44,7 @@ impl Piece for Bishop {
 }
 
 #[test]
-fn bishop_possible_moves_empty() {
+fn possible_moves_empty() {
     let me1 = Bishop::new(Position::new(3, 3));
     let board = Board {
         my_pieces: vec![Box::new(me1)],
@@ -69,5 +69,22 @@ fn bishop_possible_moves_empty() {
         ],
         me1.possible_moves(&board),
         "bishop moves on an empty board"
+    );
+}
+
+#[test]
+fn captures() {
+    let me1 = Bishop::new(Position::new(3, 3));
+    let enemy1 = Pawn::new(Position::new(6, 6), false);
+    let enemy2 = Pawn::new(Position::new(5, 5), false);
+    let board = Board {
+        my_pieces: vec![Box::new(me1)],
+        enemy_pieces: vec![Box::new(enemy1), Box::new(enemy2)],
+    };
+
+    assert_eq!(
+        vec![Position::new(5, 5)],
+        me1.possible_captures(&board),
+        "bishop single capture"
     );
 }

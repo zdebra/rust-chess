@@ -74,7 +74,7 @@ impl Piece for Pawn {
 }
 
 #[test]
-fn pawn_possible_captures() {
+fn possible_captures() {
     let me1 = Pawn::new(Position::new(3, 1), true);
     let me2 = Pawn::new(Position::new(7, 1), true);
     let me3 = Pawn::new(Position::new(1, 4), true);
@@ -137,7 +137,7 @@ fn pawn_possible_captures() {
 }
 
 #[test]
-fn pawn_possible_moves() {
+fn possible_moves() {
     let me1 = Pawn::new(Position::new(0, 1), true);
     let me2 = Pawn::new(Position::new(1, 1), true);
     let me3 = Pawn::new(Position::new(2, 1), true);
