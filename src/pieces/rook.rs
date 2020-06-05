@@ -46,7 +46,21 @@ impl Piece for Rook {
             .collect()
     }
     fn possible_captures(&self, board: &Board) -> Vec<Position> {
-        vec![]
+        Rook::directions()
+            .iter()
+            .map(|&direction| {
+                for pos in walk_direction(self.position, direction) {
+                    if let Some(_) = board.enemy_collision(pos) {
+                        return Some(pos);
+                    }
+                    if let Some(_) = board.collision(pos) {
+                        return None;
+                    }
+                }
+                None
+            })
+            .flatten() // this works because Option implements IntoIter, iterator over Some variants
+            .collect()
     }
     fn icon(&self) -> Icon {
         Icon {
@@ -111,6 +125,7 @@ fn rook_possible_moves_collisions() {
     );
 }
 
+#[test]
 fn rook_possible_moves_some_collisions() {
     let me1 = Rook::new(Position::new(3, 3));
     let me2 = Rook::new(Position::new(4, 3));
@@ -131,4 +146,37 @@ fn rook_possible_moves_some_collisions() {
         me1.possible_moves(&board),
         "rook has collisions on every side"
     );
+}
+
+#[test]
+fn rook_possible_captures_some_collisions() {
+    let me1 = Rook::new(Position::new(3, 3));
+    let me2 = Rook::new(Position::new(4, 3));
+    let enemy2 = Rook::new(Position::new(2, 3));
+    let enemy3 = Rook::new(Position::new(3, 2));
+    let enemy4 = Rook::new(Position::new(4, 2));
+    let board = Board {
+        my_pieces: vec![Box::new(me1), Box::new(me2)],
+        enemy_pieces: vec![Box::new(enemy2), Box::new(enemy3), Box::new(enemy4)],
+    };
+
+    assert_eq!(
+        vec![Position::new(3, 2), Position::new(2, 3)],
+        me1.possible_captures(&board),
+        "rook has 2 immidiate captures on every side"
+    );
+}
+
+#[test]
+fn rook_possible_captures_no_enemies() {
+    let me1 = Rook::new(Position::new(3, 3));
+    let me2 = Rook::new(Position::new(4, 3));
+    let enemy1 = Rook::new(Position::new(0, 0));
+    let board = Board {
+        my_pieces: vec![Box::new(me1), Box::new(me2)],
+        enemy_pieces: vec![Box::new(enemy1)],
+    };
+
+    let empty: Vec<Position> = vec![];
+    assert_eq!(empty, me1.possible_captures(&board), "rook has no enemies");
 }
