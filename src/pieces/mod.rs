@@ -66,6 +66,45 @@ fn walk_direction(cur_position: Position, direction: Direction) -> Vec<Position>
     output
 }
 
+fn linear_moves<'a, T>(directions: T, cur_pos: Position, board: &Board) -> Vec<Position>
+where
+    T: Iterator<Item = &'a Direction>,
+{
+    directions
+        .map(|&direction| {
+            let mut positions = vec![];
+            for pos in walk_direction(cur_pos, direction) {
+                if let Some(_) = board.collision(pos) {
+                    return positions;
+                }
+                positions.push(pos);
+            }
+            positions
+        })
+        .flatten()
+        .collect()
+}
+
+fn linear_captures<'a, T>(directions: T, cur_pos: Position, board: &Board) -> Vec<Position>
+where
+    T: Iterator<Item = &'a Direction>,
+{
+    directions
+        .map(|&direction| {
+            for pos in walk_direction(cur_pos, direction) {
+                if let Some(_) = board.enemy_collision(pos) {
+                    return Some(pos);
+                }
+                if let Some(_) = board.collision(pos) {
+                    return None;
+                }
+            }
+            None
+        })
+        .flatten() // this works because Option implements IntoIter, iterator over Some variants
+        .collect()
+}
+
 #[test]
 fn walk_direction_bottom_up_all_the_way() {
     let walked = walk_direction(Position::new(0, 0), Direction::Up);

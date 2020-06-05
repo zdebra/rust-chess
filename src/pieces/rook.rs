@@ -30,37 +30,10 @@ impl Piece for Rook {
     }
 
     fn possible_moves(&self, board: &Board) -> Vec<Position> {
-        Rook::directions()
-            .iter()
-            .map(|&direction| {
-                let mut positions = vec![];
-                for pos in walk_direction(self.position, direction) {
-                    if let Some(_) = board.collision(pos) {
-                        return positions;
-                    }
-                    positions.push(pos);
-                }
-                positions
-            })
-            .flatten()
-            .collect()
+        linear_moves(Rook::directions().iter(), self.position, board)
     }
     fn possible_captures(&self, board: &Board) -> Vec<Position> {
-        Rook::directions()
-            .iter()
-            .map(|&direction| {
-                for pos in walk_direction(self.position, direction) {
-                    if let Some(_) = board.enemy_collision(pos) {
-                        return Some(pos);
-                    }
-                    if let Some(_) = board.collision(pos) {
-                        return None;
-                    }
-                }
-                None
-            })
-            .flatten() // this works because Option implements IntoIter, iterator over Some variants
-            .collect()
+        linear_captures(Rook::directions().iter(), self.position, board)
     }
     fn icon(&self) -> Icon {
         Icon {
