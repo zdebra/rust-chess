@@ -3,9 +3,90 @@ use super::pieces::{swap_positions, to_space, Action, Piece};
 use super::position::Position;
 use std::fmt;
 
+/// Represents a board from perspective of the player that is about to play, hence
+/// my_pieces and enemy_pieces fields.
 pub struct Board {
     pub my_pieces: Vec<Box<dyn Piece>>,
     pub enemy_pieces: Vec<Box<dyn Piece>>,
+}
+
+impl Board {
+    /// Returns Some with a reference to my own colliding piece on a given position.
+    /// Returns None if there is no colliding my piece.
+    fn my_collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
+        for piece in self.my_pieces.iter() {
+            if piece.get_position() == position {
+                return Some(piece);
+            }
+        }
+        None
+    }
+
+    /// Returns Some with a reference to enemy colliding piece on a given position.
+    /// Returns None if there is no colliding enemy piece.
+    pub fn enemy_collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
+        for piece in self.enemy_pieces.iter() {
+            if piece.get_position() == position {
+                return Some(piece);
+            }
+        }
+        None
+    }
+    /// Returns Some with a reference to a colliding piece on a given [position].
+    /// Returns None if there is no colliding piece.
+    pub fn collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
+        if let Some(my_piece) = self.my_collision(position) {
+            Some(my_piece)
+        } else if let Some(enemy_piece) = self.enemy_collision(position) {
+            Some(enemy_piece)
+        } else {
+            None
+        }
+    }
+
+    /// Returns Vec of all possible actions in a current turn
+    pub fn possible_actions(&self) -> Vec<Action> {
+        let mut actions = Vec::new();
+        for piece in self.my_pieces.iter() {
+            for action in piece.possible_actions(&self) {
+                actions.push(Action {
+                    source: piece.get_position(),
+                    destination: action,
+                });
+            }
+        }
+        actions
+    }
+
+    /// Mutates internal state to swap the sides. This is usually used after each turn.
+    pub fn swap_sides(&mut self) {
+        std::mem::swap(&mut self.my_pieces, &mut self.enemy_pieces);
+        swap_positions(&mut self.enemy_pieces);
+        swap_positions(&mut self.my_pieces);
+    }
+
+    /// Executes given action. Yields error if action is not valid.
+    pub fn play(&mut self, action: &Action) -> Result<(), Error> {
+        if !self.possible_actions().iter().any(|a| a == action) {
+            return Err(Error::InvalidAction);
+        }
+        // remove enemy piece if the action destination collides with it
+        if let Some(enemy_index) = self
+            .enemy_pieces
+            .iter()
+            .position(|piece| piece.get_position() == action.destination)
+        {
+            self.enemy_pieces.remove(enemy_index);
+        }
+
+        // set position of the piece to the destination
+        self.my_pieces
+            .iter_mut()
+            .find(|piece| piece.get_position() == action.source)
+            .unwrap()
+            .set_position(action.destination);
+        Ok(())
+    }
 }
 
 impl fmt::Display for Board {
@@ -42,74 +123,6 @@ impl fmt::Display for Board {
             ))?;
         }
         f.write_str("  a b c d e f g h\n")?;
-        Ok(())
-    }
-}
-
-impl Board {
-    fn my_collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
-        for piece in self.my_pieces.iter() {
-            if piece.get_position() == position {
-                return Some(piece);
-            }
-        }
-        None
-    }
-    pub fn enemy_collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
-        for piece in self.enemy_pieces.iter() {
-            if piece.get_position() == position {
-                return Some(piece);
-            }
-        }
-        None
-    }
-    pub fn collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
-        if let Some(my_piece) = self.my_collision(position) {
-            Some(my_piece)
-        } else if let Some(enemy_piece) = self.enemy_collision(position) {
-            Some(enemy_piece)
-        } else {
-            None
-        }
-    }
-
-    pub fn possible_actions(&self) -> Vec<Action> {
-        let mut actions = Vec::new();
-        for piece in self.my_pieces.iter() {
-            for action in piece.possible_actions(&self) {
-                actions.push(Action {
-                    source: piece.get_position(),
-                    destination: action,
-                });
-            }
-        }
-        actions
-    }
-
-    pub fn swap_sides(&mut self) {
-        std::mem::swap(&mut self.my_pieces, &mut self.enemy_pieces);
-        swap_positions(&mut self.enemy_pieces);
-        swap_positions(&mut self.my_pieces);
-    }
-
-    pub fn play(&mut self, action: &Action) -> Result<(), Error> {
-        if !self.possible_actions().iter().any(|a| a == action) {
-            return Err(Error::InvalidAction);
-        }
-        if let Some(enemy_piece) = self.enemy_collision(action.destination) {
-            let enemy_piece_index = self
-                .enemy_pieces
-                .iter()
-                .position(|piece| piece == enemy_piece)
-                .unwrap();
-            self.enemy_pieces.remove(enemy_piece_index);
-        }
-
-        self.my_pieces
-            .iter_mut()
-            .find(|piece| piece.get_position() == action.source)
-            .unwrap()
-            .set_position(action.destination);
         Ok(())
     }
 }
