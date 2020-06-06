@@ -20,6 +20,8 @@ fn main() {
             Box::new(pieces::Bishop::new(position::Position { x: 2, y: 0 })),
             Box::new(pieces::Bishop::new(position::Position { x: 5, y: 0 })),
             Box::new(pieces::Queen::new(position::Position { x: 3, y: 0 })),
+            Box::new(pieces::Knight::new(position::Position { x: 1, y: 0 })),
+            Box::new(pieces::Knight::new(position::Position { x: 6, y: 0 })),
         ],
         enemy_pieces: vec![
             Box::new(pieces::Pawn::new(position::Position { x: 0, y: 6 }, true)),
@@ -35,6 +37,8 @@ fn main() {
             Box::new(pieces::Bishop::new(position::Position { x: 2, y: 7 })),
             Box::new(pieces::Bishop::new(position::Position { x: 5, y: 7 })),
             Box::new(pieces::Queen::new(position::Position { x: 3, y: 7 })),
+            Box::new(pieces::Knight::new(position::Position { x: 1, y: 7 })),
+            Box::new(pieces::Knight::new(position::Position { x: 6, y: 7 })),
         ],
     };
 
