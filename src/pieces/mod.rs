@@ -9,6 +9,8 @@ pub mod queen;
 pub use queen::Queen;
 pub mod knight;
 pub use knight::Knight;
+pub mod king;
+pub use king::King;
 
 pub trait Piece: std::fmt::Debug {
     fn get_position(&self) -> Position;
