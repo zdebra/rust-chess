@@ -16,7 +16,10 @@ pub trait Piece: std::fmt::Debug {
     fn get_position(&self) -> Position;
     fn set_position(&mut self, position: Position);
     fn possible_moves(&self, board: &Board) -> Vec<Position>;
-    fn possible_captures(&self, board: &Board) -> Vec<Position>;
+
+    /// Reports all legal capture moves that piece can do from its current position.
+    /// It doesn't matter whether there is a piece or not.
+    fn allowed_strike_destinations(&self, board: &Board) -> Vec<Position>;
     fn icon(&self) -> Icon;
 
     fn possible_actions(&self, board: &Board) -> Vec<Position> {
@@ -28,6 +31,13 @@ pub trait Piece: std::fmt::Debug {
     fn swap_position(&mut self) {
         let pos = self.get_position();
         self.set_position(Position::new(pos.x, 7 - pos.y));
+    }
+
+    fn possible_captures(&self, board: &Board) -> Vec<Position> {
+        self.allowed_strike_destinations(board)
+            .into_iter()
+            .filter(|&pos| board.enemy_collision(pos).is_some())
+            .collect()
     }
 }
 
@@ -108,6 +118,28 @@ where
                 }
             }
             None
+        })
+        .flatten() // this works because Option implements IntoIter, iterator over Some variants
+        .collect()
+}
+
+fn linear_raw_captures<'a, T>(directions: T, cur_pos: Position, board: &Board) -> Vec<Position>
+where
+    T: Iterator<Item = &'a Direction>,
+{
+    directions
+        .map(|&direction| {
+            let mut output = vec![];
+            for pos in walk_direction(cur_pos, direction) {
+                if let Some(_) = board.my_collision(pos) {
+                    break;
+                }
+                output.push(pos);
+                if let Some(_) = board.enemy_collision(pos) {
+                    break;
+                }
+            }
+            output
         })
         .flatten() // this works because Option implements IntoIter, iterator over Some variants
         .collect()

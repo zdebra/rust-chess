@@ -36,8 +36,9 @@ impl Piece for Queen {
     fn possible_moves(&self, board: &Board) -> Vec<Position> {
         linear_moves(Queen::directions().iter(), self.position, board)
     }
-    fn possible_captures(&self, board: &Board) -> Vec<Position> {
-        linear_captures(Queen::directions().iter(), self.position, board)
+
+    fn allowed_strike_destinations(&self, board: &Board) -> Vec<Position> {
+        linear_raw_captures(Self::directions().iter(), self.position, board)
     }
     fn icon(&self) -> Icon {
         Icon {

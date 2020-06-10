@@ -57,19 +57,14 @@ impl Piece for Pawn {
         moves
     }
 
-    /// Returns pawn's possible captures:
-    /// - 1 move in up-left or up-right directions
-    fn possible_captures(&self, board: &Board) -> Vec<Position> {
-        let mut captures = Vec::new();
+    fn allowed_strike_destinations(&self, board: &Board) -> Vec<Position> {
         let capture_directions = vec![Direction::UpLeft, Direction::UpRight];
-        for direction in capture_directions {
-            if let Ok(capture_pos) = self.position.move_copy(direction, 1) {
-                if let Some(_) = board.enemy_collision(capture_pos) {
-                    captures.push(capture_pos);
-                }
-            }
-        }
-        captures
+        capture_directions
+            .iter()
+            .map(|&direction| self.position.move_copy(direction, 1))
+            .flatten()
+            .filter(|&pos| board.my_collision(pos).is_none())
+            .collect()
     }
 }
 

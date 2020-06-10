@@ -13,7 +13,7 @@ pub struct Board {
 impl Board {
     /// Returns Some with a reference to my own colliding piece on a given position.
     /// Returns None if there is no colliding my piece.
-    fn my_collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
+    pub fn my_collision(&self, position: Position) -> Option<&Box<dyn Piece>> {
         for piece in self.my_pieces.iter() {
             if piece.get_position() == position {
                 return Some(piece);
@@ -86,6 +86,24 @@ impl Board {
             .unwrap()
             .set_position(action.destination);
         Ok(())
+    }
+
+    pub fn check_position(&self, pos: Position) -> bool {
+        // self.swap_sides();
+        let is_empty = self
+            .enemy_pieces
+            .iter()
+            .map(|enemy_piece| {
+                enemy_piece
+                    .allowed_strike_destinations(self)
+                    .into_iter()
+                    .find(|&p| pos == p)
+            })
+            .flatten()
+            .collect::<Vec<Position>>()
+            .is_empty();
+        // self.swap_sides();
+        is_empty
     }
 }
 
@@ -181,4 +199,19 @@ fn swap_sides() {
         Box::new(Pawn::new(Position { x: 1, y: 6 }, true)),
     ];
     assert_eq!(expected, board.enemy_pieces);
+}
+
+#[test]
+fn check_position_simple() {
+    use super::pieces::Pawn;
+    let p1 = Pawn::new(Position { x: 0, y: 1 }, true);
+    let p2 = Pawn::new(Position { x: 1, y: 1 }, true);
+    let p3 = Pawn::new(Position { x: 0, y: 6 }, true);
+    let mut board = Board {
+        my_pieces: vec![Box::new(p1), Box::new(p2)],
+        enemy_pieces: vec![Box::new(p3)],
+    };
+
+    assert_eq!(true, board.check_position(Position { x: 1, y: 5 }));
+    assert_ne!(true, board.check_position(Position { x: 0, y: 6 }));
 }

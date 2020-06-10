@@ -32,9 +32,11 @@ impl Piece for Bishop {
     fn possible_moves(&self, board: &Board) -> Vec<Position> {
         linear_moves(Bishop::directions().iter(), self.position, board)
     }
-    fn possible_captures(&self, board: &Board) -> Vec<Position> {
-        linear_captures(Bishop::directions().iter(), self.position, board)
+
+    fn allowed_strike_destinations(&self, board: &Board) -> Vec<Position> {
+        linear_raw_captures(Self::directions().iter(), self.position, board)
     }
+
     fn icon(&self) -> Icon {
         Icon {
             dark: '♝',

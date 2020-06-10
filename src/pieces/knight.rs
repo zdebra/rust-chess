@@ -54,10 +54,10 @@ impl Piece for Knight {
             .collect()
     }
 
-    fn possible_captures(&self, board: &Board) -> Vec<Position> {
+    fn allowed_strike_destinations(&self, board: &Board) -> Vec<Position> {
         self.destinations()
             .into_iter()
-            .filter(|&x| board.enemy_collision(x).is_some())
+            .filter(|&x| board.my_collision(x).is_none())
             .collect()
     }
 }

@@ -45,10 +45,11 @@ impl Piece for King {
             .map(|&direction| self.position.move_copy(direction, 1))
             .flatten()
             .filter(|&pos| board.collision(pos).is_none())
+            // .filter(|&pos| !board.check_position(pos))
             .collect()
     }
 
-    fn possible_captures(&self, board: &Board) -> Vec<Position> {
+    fn allowed_strike_destinations(&self, board: &Board) -> Vec<Position> {
         vec![]
     }
 }
@@ -78,7 +79,7 @@ fn possible_moves_empty_board() {
 }
 
 #[test]
-fn possible_moves_collisions() {
+fn possible_moves_allied_collisions() {
     let me1 = King::new(Position::new(3, 3));
     let board = Board {
         my_pieces: vec![
@@ -100,5 +101,26 @@ fn possible_moves_collisions() {
         ],
         me1.possible_moves(&board),
         "king moves on a board with collisions"
+    );
+}
+
+#[test]
+fn possible_moves_move_to_check() {
+    let me1 = King::new(Position::new(3, 3));
+    let board = Board {
+        my_pieces: vec![Box::new(me1)],
+        enemy_pieces: vec![Box::new(Rook::new(Position::new(0, 4)))],
+    };
+
+    assert_eq!(
+        vec![
+            Position::new(4, 3),
+            Position::new(4, 2),
+            Position::new(3, 2),
+            Position::new(2, 2),
+            Position::new(2, 3),
+        ],
+        me1.possible_moves(&board),
+        "king can't move to the check state"
     );
 }
