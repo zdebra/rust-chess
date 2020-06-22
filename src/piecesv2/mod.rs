@@ -69,7 +69,7 @@ impl Ray {
 mod tests {
     use super::*;
     #[test]
-    fn piece_legal_moves() {
+    fn pawn_legal_moves() {
         let pawn = Piece::Pawn(Position::new(3, 3));
         assert_eq!(
             vec![Ray {
@@ -78,6 +78,15 @@ mod tests {
                 limit: 1
             }],
             pawn.legal_moves()
+        );
+        let pawn_starting = Piece::Pawn(Position::new(4, 1));
+        assert_eq!(
+            vec![Ray {
+                start: Position::new(4, 2),
+                direction: Direction::Up,
+                limit: 2
+            }],
+            pawn_starting.legal_moves()
         );
     }
 }
