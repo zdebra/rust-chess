@@ -13,7 +13,7 @@ impl fmt::Display for Position {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, std::fmt::Debug, PartialEq, Eq)]
 pub enum Direction {
     Up,
     Down,

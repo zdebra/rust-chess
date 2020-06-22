@@ -2,6 +2,7 @@ use rand::seq::SliceRandom;
 mod board;
 mod errors;
 mod pieces;
+mod piecesv2;
 mod position;
 
 fn main() {

@@ -11,6 +11,7 @@ pub mod knight;
 pub use knight::Knight;
 pub mod king;
 pub use king::King;
+use std::fmt;
 
 pub trait Piece: std::fmt::Debug {
     fn get_position(&self) -> Position;
