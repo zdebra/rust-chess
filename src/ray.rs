@@ -28,12 +28,50 @@ impl Ray {
 
     /// Yields Vec of valid Actions for piece in starting position of the ray
     pub fn move_actions(&self, my_pieces: &Vec<Piece>, enemy_pieces: &Vec<Piece>) -> Vec<Action> {
-        let actions = vec![];
-        // for pos in self {
-        //     match my_pieces.iter().find(|&piece| piece.get_position() == pos) {}
-        // }
+        let has_collision = |pieces: &Vec<Piece>, pos: Position| -> bool {
+            pieces
+                .iter()
+                .find(|&piece| piece.collides_with(pos))
+                .is_some()
+        };
+
+        let mut actions = vec![];
+        for pos in self {
+            if !has_collision(my_pieces, pos) && !has_collision(enemy_pieces, pos) {
+                actions.push(Action::new(self.start, pos));
+            } else {
+                return actions;
+            }
+        }
         actions
     }
+}
+
+#[test]
+fn move_actions() {
+    let start_pos = Position::new(2, 2);
+    let ray = Ray::new(start_pos, Direction::Up, 5);
+    assert_eq!(
+        vec![
+            Action::new(start_pos, Position::new(2, 3)),
+            Action::new(start_pos, Position::new(2, 4)),
+            Action::new(start_pos, Position::new(2, 5)),
+        ],
+        ray.move_actions(
+            &vec![Piece::Pawn(start_pos), Piece::Pawn(Position::new(2, 6))],
+            &vec![]
+        )
+    );
+    assert_eq!(
+        vec![
+            Action::new(start_pos, Position::new(2, 3)),
+            Action::new(start_pos, Position::new(2, 4)),
+        ],
+        ray.move_actions(
+            &vec![Piece::Pawn(start_pos), Piece::Pawn(Position::new(2, 6))],
+            &vec![Piece::Pawn(Position::new(2, 5))],
+        )
+    );
 }
 
 impl IntoIterator for Ray {

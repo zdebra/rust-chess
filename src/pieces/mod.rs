@@ -1,15 +1,19 @@
 use super::position::{Direction, Position};
 use super::ray::Ray;
-use super::Action;
 
 pub enum Piece {
     Pawn(Position),
 }
 
 impl Piece {
-    fn legal_moves(&self) -> Vec<Ray> {
+    pub fn legal_moves(&self) -> Vec<Ray> {
         match self {
             Piece::Pawn(pos) => pawn_moves(*pos),
+        }
+    }
+    pub fn collides_with(&self, position: Position) -> bool {
+        match self {
+            Piece::Pawn(pos) => &position == pos,
         }
     }
 }
@@ -27,21 +31,6 @@ fn pawn_moves(position: Position) -> Vec<Ray> {
         }
     }
     vec![Ray::new(starting_pos, Direction::Up, ray_limit)]
-}
-
-struct Board {
-    my_pieces: Vec<Piece>,
-    enemy_pieces: Vec<Piece>,
-}
-
-impl Board {
-    fn legal_moves(&self) -> Vec<Action> {
-        self.my_pieces
-            .iter()
-            .flat_map(|my_piece| my_piece.legal_moves())
-            .flat_map(|ray| ray.move_actions(&self.my_pieces, &self.enemy_pieces))
-            .collect()
-    }
 }
 
 #[cfg(test)]

@@ -1,3 +1,21 @@
+use super::pieces::Piece;
+use super::Action;
+
+struct Board {
+    my_pieces: Vec<Piece>,
+    enemy_pieces: Vec<Piece>,
+}
+
+impl Board {
+    fn legal_moves(&self) -> Vec<Action> {
+        self.my_pieces
+            .iter()
+            .flat_map(|my_piece| my_piece.legal_moves())
+            .flat_map(|ray| ray.move_actions(&self.my_pieces, &self.enemy_pieces))
+            .collect()
+    }
+}
+
 // use super::errors::Error;
 // use super::position::Position;
 // use std::fmt;
