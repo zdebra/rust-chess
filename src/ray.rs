@@ -26,6 +26,10 @@ impl Ray {
         }
     }
 
+    pub fn new_point(position: Position) -> Self {
+        Self::new(position, Direction::Up, 1) // direction doesn't matter here as it is a point
+    }
+
     /// Yields Vec of valid Actions for piece in starting position of the ray
     pub fn move_actions(&self, my_pieces: &Vec<Piece>, enemy_pieces: &Vec<Piece>) -> Vec<Action> {
         let has_collision = |pieces: &Vec<Piece>, pos: Position| -> bool {

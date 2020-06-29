@@ -11,6 +11,11 @@ impl Piece {
             Piece::Pawn(pos) => pawn_moves(*pos),
         }
     }
+    pub fn legal_strikes(&self) -> Vec<Ray> {
+        match self {
+            Piece::Pawn(pos) => pawn_strikes(*pos),
+        }
+    }
     pub fn collides_with(&self, position: Position) -> bool {
         match self {
             Piece::Pawn(pos) => &position == pos,
@@ -33,6 +38,14 @@ fn pawn_moves(position: Position) -> Vec<Ray> {
     vec![Ray::new(starting_pos, Direction::Up, ray_limit)]
 }
 
+fn pawn_strikes(position: Position) -> Vec<Ray> {
+    vec![Direction::UpLeft, Direction::UpRight]
+        .into_iter()
+        .flat_map(|direction| position.move_copy(direction, 1))
+        .map(|position| Ray::new_point(position))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -48,5 +61,24 @@ mod tests {
             vec![Ray::new_from(4, 2, Direction::Up, 2)],
             pawn_starting.legal_moves()
         );
+    }
+
+    #[test]
+    fn pawn_legal_strikes() {
+        let pawn = Piece::Pawn(Position::new(3, 3));
+        assert_eq!(
+            vec![
+                Ray::new_point(Position::new(2, 4)),
+                Ray::new_point(Position::new(4, 4))
+            ],
+            pawn.legal_strikes()
+        );
+        let pawn = Piece::Pawn(Position::new(0, 3));
+        assert_eq!(
+            vec![Ray::new_point(Position::new(1, 4))],
+            pawn.legal_strikes()
+        );
+        let pawn = Piece::Pawn(Position::new(3, 7));
+        assert_eq!(Vec::<Ray>::new(), pawn.legal_strikes());
     }
 }
