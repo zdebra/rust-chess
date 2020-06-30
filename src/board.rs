@@ -14,6 +14,13 @@ impl Board {
             .flat_map(|ray| ray.move_actions(&self.my_pieces, &self.enemy_pieces))
             .collect()
     }
+    fn legal_strikes(&self) -> Vec<Action> {
+        self.my_pieces
+            .iter()
+            .flat_map(|my_piece| my_piece.legal_strikes())
+            .flat_map(|ray| ray.strike_actions(&self.my_pieces, &self.enemy_pieces))
+            .collect()
+    }
 }
 
 // use super::errors::Error;

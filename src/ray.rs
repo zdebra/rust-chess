@@ -49,6 +49,27 @@ impl Ray {
         }
         actions
     }
+
+    pub fn strike_actions(&self, my_pieces: &Vec<Piece>, enemy_pieces: &Vec<Piece>) -> Vec<Action> {
+        let has_collision = |pieces: &Vec<Piece>, pos: Position| -> bool {
+            pieces
+                .iter()
+                .find(|&piece| piece.collides_with(pos))
+                .is_some()
+        };
+
+        let mut actions = vec![];
+        for pos in self {
+            if has_collision(my_pieces, pos) {
+                break;
+            }
+            if has_collision(enemy_pieces, pos) {
+                actions.push(Action::new(self.start, pos));
+                break;
+            }
+        }
+        actions
+    }
 }
 
 #[test]
@@ -74,6 +95,36 @@ fn move_actions() {
         ray.move_actions(
             &vec![Piece::Pawn(start_pos), Piece::Pawn(Position::new(2, 6))],
             &vec![Piece::Pawn(Position::new(2, 5))],
+        )
+    );
+}
+
+#[test]
+fn strike_actions() {
+    let start_pos = Position::new(2, 2);
+    let ray = Ray::new(start_pos, Direction::Up, 5);
+    assert_eq!(
+        vec![Action::new(start_pos, Position::new(2, 4)),],
+        ray.strike_actions(
+            &vec![Piece::Pawn(start_pos)],
+            &vec![
+                Piece::Pawn(Position::new(2, 4)),
+                Piece::Pawn(Position::new(2, 5))
+            ]
+        )
+    );
+    assert_eq!(
+        vec![Action::new(start_pos, Position::new(2, 4))],
+        ray.strike_actions(
+            &vec![Piece::Pawn(start_pos), Piece::Pawn(Position::new(2, 5))],
+            &vec![Piece::Pawn(Position::new(2, 4))]
+        )
+    );
+    assert_eq!(
+        vec![Action::new(start_pos, Position::new(2, 4))],
+        ray.strike_actions(
+            &vec![Piece::Pawn(start_pos), Piece::Pawn(Position::new(2, 5))],
+            &vec![Piece::Pawn(Position::new(2, 4))]
         )
     );
 }
